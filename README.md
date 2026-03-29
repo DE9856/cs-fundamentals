@@ -7,7 +7,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Focus-Systems%20%2B%20Core%20CS-blue" />
   <img src="https://img.shields.io/badge/Approach-Implementation%20Driven-orange" />
-  <img src="https://img.shields.io/badge/Language-C%20%7C%20Java-green" />
+  <img src="https://img.shields.io/badge/Language-C%20%7C%20Java%20%7CPython-green" />
 </p>
 
 ---
