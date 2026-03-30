@@ -1,0 +1,15 @@
+# Takes student details and marks as input, then calculates and displays the total and percentage.
+
+name = input("Enter your name: ")
+usn = input("Enter your USN: ")
+marks1 = int(input("Enter marks for subject 1: "))
+marks2 = int(input("Enter marks for subject 2: "))
+marks3 = int(input("Enter marks for subject 3: "))
+print("Student Details: \n")
+print("Name:", name)
+print("USN:", usn)
+print("Marks for Subject 1:", marks1)
+print("Marks for Subject 2:", marks2)
+print("Marks for Subject 3:", marks3)
+print("Total Marks:", marks1 + marks2 + marks3)
+print("Percentage:", (marks1 + marks2 + marks3) / 3)
