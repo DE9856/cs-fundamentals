@@ -1,63 +1,55 @@
-const fs = require("fs");
-const path = require("path");
-const dataDir = path.join(__dirname, "files");
+const fs = require('fs');
+const path = require('path');
+const datadir = path.join(__dirname, "files");
 
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir);
+if(!fs.existsSync(datadir)){
+    fs.mkdirSync(datadir);
 }
 
-function createFile(filename, data) {
-  const filePath = path.join(dataDir, filename);
-
-  fs.writeFile(filePath, data, (err) => {
-    if (err) console.log(err);
-    else console.log("File created");
-  });
+function createfile(filename,data){
+    const filepath = path.join(datadir,filename);
+    fs.writeFile(filepath,data,(err)=>{
+        if(err) console.log("Error in creating file");
+        else console.log("Created file");
+    });
 }
 
-function readFile(filename) {
-  const filePath = path.join(dataDir, filename);
-
-  fs.readFile(filePath, "utf8", (err, data) => {
-    if (err) console.log(err);
-    else console.log("File content:", data);
-  });
+function readfile(filename){
+    const filepath = path.join(datadir,filename);
+    fs.readFile(filepath,"utf8", (err,data)=>{
+        if (err) console.log("Error in reading file");
+        else console.log("Data read: ",data);
+    });
 }
 
-function updateFile(filename, newData) {
-  const filePath = path.join(dataDir, filename);
+function updatefile(filename,data){
+    const filepath = path.join(datadir,filename);
 
-  fs.writeFile(filePath, newData, (err) => {
-    if (err) console.log(err);
-    else console.log("File updated");
-  });
+    fs.writeFile(filepath,data,(err)=>{
+        if(err) console.log("Error in updating file");
+        else console.log("File Updated");
+    });
 }
 
-function deleteFile(filename) {
-  const filePath = path.join(dataDir, filename);
+function deletefile(filename){
+    const filepath = path.join(datadir,filename);
 
-  fs.unlink(filePath, (err) => {
-    if (err) console.log(err);
-    else console.log("File deleted");
-  });
+    fs.unlink(filepath, (err)=>{
+        if (err) console.log("Error in deleting file");
+        else console.log("File Deleted Successfully");
+    });
 }
 
-createFile("sample.txt", "Hello World");
-setTimeout(() => {
-  readFile("sample.txt");
-
-  setTimeout(() => {
-    updateFile("sample.txt", "New Data");
-
-    setTimeout(() => {
-      readFile("sample.txt");
-
-      setTimeout(() => {
-        deleteFile("sample.txt");
-      }, 500);
-
-    }, 500);
-
-  }, 500);
-
-}, 500);
+createfile("sample.txt", "Original Data");
+setTimeout(()=>{
+    readfile("sample.txt");
+    setTimeout(()=>{
+        updatefile("sample.txt", "Updated Data");
+        setTimeout(()=>{
+            readfile("sample.txt");
+            setTimeout(()=>{
+                deletefile("sample.txt");
+            },500);
+        },500);
+    },500);
+},500);
