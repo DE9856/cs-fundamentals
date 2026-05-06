@@ -4,10 +4,16 @@ function App(){
   const initiallist = ['Mango','Maggi','Banana','Apple','Watermelon'];
   const [list,updatelist] = useState(initiallist);
   const filterlist = (event) =>{
-    const value = event.target.value.toLowerCase();
-    const filtered = initiallist.filter(item =>
-      item.toLowerCase().includes(value));
-    updatelist(filtered);
+    const filtered = []
+    if(event.target){
+      for(let i = 0;i<initiallist.length;i++){
+        if(initiallist[i].includes(event.target.value))
+          filtered.push(initiallist[i]);
+      }
+      updatelist(filtered)
+    }
+    else
+      updatelist(initiallist);
   };
   return (
     <div className = "App">
