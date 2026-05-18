@@ -1,5 +1,3 @@
-from typing import List
-
 def is_var(x):
     return x[0].islower()
 
