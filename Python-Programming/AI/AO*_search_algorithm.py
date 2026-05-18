@@ -31,7 +31,6 @@ def shortest_route(start, updated_cost, H):
     path = start
     if start not in updated_cost:
         return path
-    min_cost = min(updated_cost[start].values())
     best_key = min(updated_cost[start], key = updated_cost[start].get)
     if 'AND' in best_key:
         parts = best_key.split(' AND ')
