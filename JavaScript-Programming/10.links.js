@@ -7,7 +7,7 @@ import Cube from './cube';
 function App() {
   return (<>
     <BrowserRouter>
-      <Link to="/prime">Prime</Link>&nbsp;&nbsp;
+      <Link to="/prime">Prime</Link>
       <Link to="/cube">Cube</Link>
       <Routes>
         <Route path="/prime" element={<Prime />}></Route>
@@ -23,22 +23,23 @@ export default App;
 //Prime.js
 function Prime(){
     function isPrime(n){
-        for (let i = 2; i < n; i++) {
-            if(n % i === 0)
+        for(let i=2;i<n;i++)
+            if(n%i===0)
                 return false;
-        }
         return true;
     }
-    const findPrime = () => {
+    const findprime = () =>{
         const array = [];
-        for (let i = 2; i <= 100; i++) {
-            if (isPrime(i))
+        for(let i=2;i<100;i++)
+            if(isPrime(i))
                 array.push(i);
-        }
         return array;
-    };
-    return (<div>
-        Primes less than 100 are <ul>{findPrime().map((elem) => { return(<li>{elem}</li>) })}</ul>
+    }
+
+    return(<div>
+        Prime Number under 100 are: <ul>{findprime().map((elem)=>{
+            return(<li>{elem}</li>)})
+        }</ul>
     </div>)
 }
 export default Prime;
@@ -46,19 +47,22 @@ export default Prime;
 
 
 //Cube.js
-function Cube() {
-    const findCube = () => {
+function Cube(){
+    const findcube = () =>{
         const array = [];
-        for (let i = 1; i < 100; i++) {
-            if ((i * i * i) < 100)
-                array.push(i * i * i);
+        for(let i=0;i<5;i++){
+            if((i*i*i)<100)
+                array.push(i*i*i);
             else
                 break;
         }
         return array;
-    };
-    return (<div>
-        Cubes less than 100 are <ul>{findCube().map((elem) => { return(<li>{elem}</li>) })}</ul>
+    }
+
+    return(<div>
+        Cube Numbers under 100 are: <ul>{findcube().map((elem)=>{
+            return(<li>{elem}</li>)})
+        }</ul>
     </div>)
 }
 export default Cube;
