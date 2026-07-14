@@ -1,24 +1,27 @@
-import { useState } from 'react';
+import {useState} from 'react';
 
 function App(){
-  const initiallist = ['Mango','Maggi','Banana','Apple','Watermelon'];
+  const initiallist = ['Mango', "Maggi", 'Banana', "Watermelon", "Apple"];
   const [list,updatelist] = useState(initiallist);
+
   const filterlist = (event) =>{
-    const filtered = []
+    const filtered = [];
     if(event.target){
-      for(let i = 0;i<initiallist.length;i++){
-        if(initiallist[i].includes(event.target.value))
+      for(let i =0;i<initiallist.length;i++){
+        if(initiallist[i].toLowerCase().includes(event.target.value.toLowerCase()))
           filtered.push(initiallist[i]);
       }
-      updatelist(filtered)
+      updatelist(filtered);
     }
-    else
+    else{
       updatelist(initiallist);
+    }
   };
+
   return (
     <div className = "App">
       <label>Search: </label>
-      <input type  = "text" onChange = {filterlist} />
+      <input type = 'text' onChange = {filterlist} />
       <ul>
         {list.map((element)=>(
           <li key = {element}>{element}</li>
