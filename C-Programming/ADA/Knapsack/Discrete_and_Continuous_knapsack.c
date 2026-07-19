@@ -1,55 +1,87 @@
 #include <stdio.h>
-#define MAX 50
+#define MAX 100
 
 typedef struct{
-    int profit, weight, index;
-    double ratio;
+    int no;
+    float weight,profit,ratio;
 } item;
 
-void greedy(item items[], int n, int m){
-    for(int i =0;i<n-1;i++)
-        for(int j = i+1;j<n;j++)
-            if(items[i].ratio< items[j].ratio){
-                item temp = items[i];
-                items[i] = items[j];
-                items[j] = temp;
+item a[MAX];
+int n;
+float capacity;
+
+void bubblesort(){
+    for(int i=0;i<n-1;i++){
+        for(int j=0;j<n-i-1;j++){
+            if(a[j].ratio<a[j+1].ratio){
+                item temp = a[j];
+                a[j] = a[j+1];
+                a[j+1] = temp;
             }
-    int cw = 0;
-    double mp = 0.0, x[MAX] = {0.0};
-    for(int i =0;i<n;i++){
-        if(cw+items[i].weight<=m){
-            x[items[i].index] = 1.0;
-            mp+=items[i].profit;
-            cw += items[i].weight;
+        }
+    }
+}
+
+void discrete(){
+    float total=0;
+    float rem = capacity;
+    int x[MAX] = {0};
+    for(int i=0;i<n;i++){
+        if(rem>=a[i].weight){
+            rem-=a[i].weight;
+            total+=a[i].profit;
+            x[i] = 1;
+        }
+    }
+    printf("Total profit in Discrete Knapsack: %f\n", total);
+    printf("Solution Vector: \n");
+    for(int i=0;i<n;i++)
+        printf("Item %d: %d\n", a[i].no, x[i]);
+}
+
+void fractional(){
+    float total =0 ;
+    float rem = capacity;
+    float x[MAX] = {0.0};
+    for(int i=0;i<n;i++){
+        if(rem>=a[i].weight){
+            rem-=a[i].weight;
+            total+=a[i].profit;
+            x[i] = 1.0;
         }
         else{
-            x[items[i].index] = (m-cw)/(double)items[i].weight;
-            mp+=x[items[i].index]*items[i].profit;
+            x[i] = rem/a[i].weight;
+            total+=(rem/a[i].weight)*a[i].profit;
             break;
         }
     }
-    printf("Optimal Solution: %.2lf", mp);
-    printf("\nSolution Vector: ");
-    for(int i =0 ;i<n;i++)
-        printf("%.2lf ", x[i]);
+    printf("The total profit is: %f\n", total);
+    printf("Solution Vector: \n");
+    for(int i=0;i<n;i++)
+        printf("Item %d: %f\n", a[i].no, x[i]);
 }
 
 void main(){
-    int n,m;
-    item items[MAX];
-    printf("Enter the number of objects: ");
+    printf("Enter the number of items: ");
     scanf("%d", &n);
+
     printf("Enter the profits: ");
-    for(int i =0 ;i<n;i++){
-        scanf("%d", &items[i].profit);
-    }
+    for(int i=0;i<n;i++)
+        scanf("%f", &a[i].profit);
+
     printf("Enter the weights: ");
-    for(int i =0;i<n;i++){
-        scanf("%d", &items[i].weight);
-        items[i].ratio = items[i].profit/items[i].weight;
-        items[i].index = i;
+    for(int i=0;i<n;i++)
+        scanf("%f", &a[i].weight);
+
+    for(int i=0;i<n;i++){
+        a[i].no=i+1;
+        a[i].ratio = a[i].profit/a[i].weight;
     }
-    printf("Enter max capacity: ");
-    scanf("%d", &m);
-    greedy(items,n,m);
+
+    printf("Enter the max capacity: ");
+    scanf("%f", &capacity);
+
+    bubblesort();
+    discrete();
+    fractional();
 }
