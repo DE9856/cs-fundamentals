@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Line of Sight — Radio, Microwave & Infrared Propagation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#17181F; --paper:#FFF7E8; --panel:#FFFFFF; --panel-2:#FBF1DC; --line:rgba(23,24,31,0.14);
+    --text:#17181F; --text-dim:#6B6656;
+    --c-radio:#0EA5B7; --c-microwave:#FF8A34; --c-infrared:#FF4D6D; --sun:#FFD23F;
+    --accent:var(--c-radio);
+    --display:'Baloo 2', ui-rounded, 'Segoe UI', sans-serif;
+    --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --mono:'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+    box-sizing:border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#F4F1E8; --paper:#14151F; --panel:#1C1E2C; --panel-2:#242739; --line:rgba(244,241,232,0.16);
+      --text:#F4F1E8; --text-dim:#9B9BAE;
+      --c-radio:#3FD3E0; --c-microwave:#FFA855; --c-infrared:#FF7089;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#F4F1E8; --paper:#14151F; --panel:#1C1E2C; --panel-2:#242739; --line:rgba(244,241,232,0.16);
+    --text:#F4F1E8; --text-dim:#9B9BAE;
+    --c-radio:#3FD3E0; --c-microwave:#FFA855; --c-infrared:#FF7089;
+  }
+  html{scroll-padding-top: env(safe-area-inset-top, 0px);}
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--text); font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:44px 24px 84px;}
+
+  .badge{
+    display:inline-flex; align-items:center; gap:8px; font-family:var(--sans); font-weight:600;
+    font-size:13px; background:var(--sun); color:#17181F; padding:7px 14px 7px 10px;
+    border-radius:999px; border:2px solid var(--ink); margin-bottom:16px;
+  }
+  h1{
+    font-family:var(--display); font-weight:700; font-size:clamp(30px,4.8vw,48px);
+    line-height:1.05; margin:0 0 14px; letter-spacing:-0.01em; max-width:15ch; color:var(--text);
+  }
+  .lede{font-size:17px; line-height:1.6; color:var(--text-dim); max-width:60ch; margin:0;}
+
+  .tabs{
+    display:inline-flex; gap:4px; margin:30px 0 20px; padding:5px; background:var(--panel);
+    border:2.5px solid var(--ink); border-radius:16px; box-shadow:4px 4px 0 var(--ink);
+  }
+  .tab{
+    appearance:none; border:none; cursor:pointer; font-family:var(--display);
+    font-size:15px; font-weight:600; color:var(--text-dim); padding:9px 18px;
+    border-radius:11px; background:transparent; transition:background .15s ease, color .15s ease;
+  }
+  .tab .dot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:8px; background:currentColor; opacity:.4; vertical-align:middle;}
+  .tab.active{color:#17181F;}
+  .tab.active .dot{opacity:1;}
+  .tab[data-mode="radio"].active{background:var(--c-radio); color:#04262A;}
+  .tab[data-mode="microwave"].active{background:var(--c-microwave); color:#3A1E00;}
+  .tab[data-mode="infrared"].active{background:var(--c-infrared); color:#3A0011;}
+
+  .panel{
+    background:var(--panel); border:2.5px solid var(--ink); border-radius:22px; overflow:hidden;
+    box-shadow:7px 7px 0 var(--ink);
+  }
+  .stage-row{display:flex; align-items:flex-start;}
+  .stage-col{flex:1 1 58%; min-width:0;}
+  .stage-wrap{position:relative; width:100%; aspect-ratio:800/430; background:var(--panel-2);}
+  canvas{display:block; width:100%; height:100%; touch-action:none; cursor:grab;}
+  canvas.dragging{cursor:grabbing;}
+
+  .hint{
+    position:absolute; top:14px; left:14px; font-size:12.5px; font-weight:600; color:var(--ink);
+    font-family:var(--sans); background:var(--panel);
+    padding:6px 12px; border-radius:999px; border:2px solid var(--ink); pointer-events:none;
+    max-width:min(72%, 380px);
+  }
+
+  .sidebar{
+    flex:0 0 42%; min-width:280px; border-left:2.5px solid var(--ink);
+    display:flex; flex-direction:column;
+  }
+
+  .controls{
+    display:flex; flex-direction:column; gap:14px;
+    padding:16px 18px; border-bottom:2.5px solid var(--ink);
+  }
+  .slider-group label{display:block; font-size:12.5px; font-weight:600; color:var(--text-dim); margin-bottom:6px;}
+  .slider-group .val{font-family:var(--mono); color:var(--text); font-weight:600;}
+  input[type=range]{ width:100%; accent-color:var(--accent); height:20px; background:transparent; cursor:pointer; }
+  .radio-note{font-size:13px; color:var(--text-dim); line-height:1.5;}
+  .radio-note b{color:var(--text);}
+  .btn-row{display:flex; gap:8px; flex-wrap:wrap;}
+  .btn{
+    appearance:none; font-family:var(--display); font-size:13px; font-weight:600; cursor:pointer;
+    padding:8px 14px; border-radius:11px; border:2px solid var(--ink); background:var(--panel-2);
+    color:var(--ink); box-shadow:3px 3px 0 var(--ink); transition:transform .1s ease, box-shadow .1s ease;
+  }
+  .btn:hover{transform:translate(1px,1px); box-shadow:2px 2px 0 var(--ink);}
+  .btn:active{transform:translate(3px,3px); box-shadow:0 0 0 var(--ink);}
+  .btn:focus-visible, .tab:focus-visible, input:focus-visible{outline:2px solid var(--c-microwave); outline-offset:2px;}
+  .btn.obstacle-on{background:var(--c-infrared); color:#3A0011;}
+
+  .telemetry{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; padding:14px 18px; border-bottom:2.5px solid var(--ink); }
+  .telemetry .cell{background:var(--panel-2); border:2px solid var(--ink); border-radius:13px; padding:10px 12px;}
+  .telemetry .label{font-size:11.5px; font-weight:600; color:var(--text-dim); margin-bottom:5px;}
+  .telemetry .value{font-family:var(--mono); font-size:14px; font-weight:600;}
+  .telemetry .value.good{color:var(--c-radio);}
+  .telemetry .value.bad{color:var(--c-infrared);}
+  .meter{height:8px; border-radius:5px; background:var(--panel); overflow:hidden; margin-top:7px; border:2px solid var(--ink);}
+  .meter-fill{height:100%; width:0%; background:var(--accent); transition:width .12s linear;}
+
+  .roster{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; padding:14px 18px; border-bottom:2.5px solid var(--ink); }
+  .roster .cell{background:var(--panel-2); border:2px solid var(--ink); border-radius:13px; padding:10px 12px;}
+  .roster .dev-head{display:flex; align-items:center; gap:7px; margin-bottom:8px;}
+  .roster .dev-emoji{font-size:18px; line-height:1;}
+  .roster .dev-name{font-size:12px; font-weight:700;}
+  .roster .bars{display:flex; align-items:flex-end; gap:3px; height:18px; margin-bottom:7px;}
+  .roster .bar{width:6px; background:var(--line); border-radius:2px; transition:background .15s ease;}
+  .roster .bar.on{background:var(--c-radio);}
+  .roster .bar:nth-child(1){height:6px;} .roster .bar:nth-child(2){height:10px;}
+  .roster .bar:nth-child(3){height:14px;} .roster .bar:nth-child(4){height:18px;}
+  .roster .status{font-family:var(--mono); font-size:10.5px; font-weight:600; color:var(--text-dim);}
+  .roster .status.good{color:var(--c-radio);}
+  .roster .status.bad{color:var(--c-infrared);}
+
+  .explainer{
+    margin-top:18px; padding:16px 20px; font-size:14px; line-height:1.65; color:var(--text-dim);
+    background:var(--panel); border:2.5px solid var(--ink); border-radius:16px; box-shadow:4px 4px 0 var(--ink);
+  }
+  .explainer strong{color:var(--text); font-weight:700;}
+
+  .cards{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:26px;}
+  .card{
+    border-radius:18px; padding:20px 20px 22px; border:2.5px solid var(--ink);
+    box-shadow:5px 5px 0 var(--ink); transition:transform .15s ease, opacity .2s ease;
+  }
+  .card.active{transform:translateY(-3px);}
+  .card[data-card="radio"]{background:color-mix(in srgb, var(--c-radio) 16%, var(--panel));}
+  .card[data-card="microwave"]{background:color-mix(in srgb, var(--c-microwave) 16%, var(--panel));}
+  .card[data-card="infrared"]{background:color-mix(in srgb, var(--c-infrared) 16%, var(--panel));}
+  .card .icon{font-size:26px; margin-bottom:6px; display:block;}
+  .card h3{margin:0 0 4px; font-family:var(--display); font-size:17px; font-weight:700;}
+  .card .freq{font-family:var(--mono); font-size:11.5px; color:var(--text-dim); margin:0 0 12px;}
+  .card ul{margin:0; padding:0; list-style:none;}
+  .card li{font-size:13px; line-height:1.55; color:var(--text-dim); padding:7px 0; border-top:1.5px solid var(--line);}
+  .card li:first-child{border-top:none; padding-top:0;}
+  .card li b{color:var(--text); font-weight:700;}
+
+  .spectrum{margin-top:44px;}
+  .spectrum h2{font-family:var(--display); font-size:18px; font-weight:700; margin:0 0 4px;}
+  .spectrum .sub{font-size:13px; color:var(--text-dim); margin:0 0 18px;}
+  .bar{
+    position:relative; height:40px; border-radius:20px; overflow:visible; border:2.5px solid var(--ink);
+    background:linear-gradient(90deg, var(--c-radio) 0%, var(--c-radio) 34%, var(--c-microwave) 34%, var(--c-microwave) 58%, var(--c-infrared) 58%, var(--c-infrared) 76%, #A385FF 76%, #A385FF 100%);
+  }
+  .bar .marker{
+    position:absolute; top:-10px; width:3px; height:60px; background:var(--ink); opacity:0; border-radius:2px;
+    transition:left .35s ease, opacity .2s ease;
+  }
+  .bar .marker.show{opacity:1;}
+  .bar .marker::before{
+    content:''; position:absolute; top:-8px; left:50%; transform:translateX(-50%);
+    width:12px; height:12px; border-radius:50%; background:var(--ink);
+  }
+  .bar .marker::after{
+    content:attr(data-tag); position:absolute; top:-30px; left:50%; transform:translateX(-50%);
+    font-family:var(--display); font-size:11px; font-weight:700; color:var(--ink); white-space:nowrap;
+    background:var(--sun); padding:2px 8px; border-radius:999px; border:1.5px solid var(--ink);
+  }
+  .wl-labels{display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px; color:var(--text-dim); margin-top:38px;}
+
+  footer{margin-top:56px; font-size:12.5px; color:var(--text-dim); padding-top:18px; border-top:2px dashed var(--line);}
+
+  @media (max-width:900px){
+    .stage-row{flex-direction:column;}
+    .stage-col{flex:none;}
+    .sidebar{flex:none; min-width:0; border-left:none; border-top:2.5px solid var(--ink);}
+  }
+  @media (max-width:720px){
+    .telemetry, .roster{grid-template-columns:repeat(2,1fr);}
+    .cards{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="badge">&#x1F310; drag-and-drop physics demo</span>
+    <h1>Why some waves bend around a hill&nbsp;— and some can't</h1>
+    <p class="lede">Radio, microwave and infrared are all electromagnetic waves — the difference is wavelength. That decides whether a signal can broadcast to many devices at once and bend around obstacles, or needs a transmitter and receiver staring straight at each other within range. Drag things around to find out.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Wave type">
+    <button class="tab active" data-mode="radio" role="tab" aria-selected="true"><span class="dot"></span>Radio</button>
+    <button class="tab" data-mode="microwave" role="tab" aria-selected="false"><span class="dot"></span>Microwave</button>
+    <button class="tab" data-mode="infrared" role="tab" aria-selected="false"><span class="dot"></span>Infrared</button>
+  </nav>
+
+  <div class="panel">
+    <div class="stage-row">
+      <div class="stage-col">
+        <div class="stage-wrap">
+          <canvas id="stage" aria-label="Wave propagation simulator"></canvas>
+          <div class="hint" id="hint">drag a device to change its distance from the tower</div>
+        </div>
+      </div>
+
+      <div class="sidebar" id="sidebar">
+        <div class="controls">
+          <div class="slider-group" id="txSliderGroup">
+            <label for="txSlider">Transmitter angle &nbsp;<span class="val" id="txVal">0Β°</span></label>
+            <input type="range" id="txSlider" min="-180" max="180" value="0" step="1">
+          </div>
+          <div class="slider-group" id="rxSliderGroup">
+            <label for="rxSlider">Receiver angle &nbsp;<span class="val" id="rxVal">180Β°</span></label>
+            <input type="range" id="rxSlider" min="-180" max="180" value="180" step="1">
+          </div>
+          <p class="radio-note" id="radioNote"><b>Radio is omnidirectional</b> β€” devices don't need aiming. Drag any device closer or farther from the tower to see its signal change, and drag it past the dashed ring to watch it drop out of range.</p>
+          <div class="btn-row">
+            <button class="btn" id="alignBtn">Align both</button>
+            <button class="btn" id="misalignBtn">Knock off-target</button>
+            <button class="btn" id="resetDevicesBtn">Reset devices</button>
+            <button class="btn" id="obstacleBtn">Add obstacle</button>
+          </div>
+        </div>
+
+        <div class="telemetry" id="telemetryDirectional">
+          <div class="cell"><div class="label">Alignment</div><div class="value" id="tAlign">—</div></div>
+          <div class="cell"><div class="label">Line of sight</div><div class="value" id="tLos">—</div></div>
+          <div class="cell"><div class="label">Signal</div><div class="value" id="tSignal">—</div></div>
+          <div class="cell"><div class="label">Strength</div><div class="meter"><div class="meter-fill" id="meterFill"></div></div></div>
+        </div>
+
+        <div class="roster" id="telemetryRadio"></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="explainer" id="explainer"></p>
+
+  <div class="spectrum">
+    <h2>Where these sit on the spectrum</h2>
+    <p class="sub">Shorter wavelength β†’ straighter travel, less bending, easier to block.</p>
+    <div class="bar" id="specBar">
+      <div class="marker" id="specMarker" data-tag="RADIO"></div>
+    </div>
+    <div class="wl-labels">
+      <span>100 km</span><span>1 m</span><span>1 mm</span><span>700 nm</span><span>10 nm</span>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card" data-card="radio">
+      <span class="icon">&#x1F4FB;</span>
+      <h3>Radio waves</h3>
+      <p class="freq">λ β‰ˆ 1 mm – 100 km &nbsp;·&nbsp; f β‰ˆ 3 kHz – 300 GHz</p>
+      <ul>
+        <li><b>Spreads</b> in (almost) every direction from a single tower to many receivers at once</li>
+        <li><b>Bends</b> around hills and buildings, and reflects off the ionosphere</li>
+        <li><b>Fades</b> gradually with distance rather than cutting off sharply</li>
+        <li><b>Used for</b> AM/FM broadcast, Wi-Fi, walkie-talkies, marine radio</li>
+      </ul>
+    </div>
+    <div class="card" data-card="microwave">
+      <span class="icon">&#x1F4D1;</span>
+      <h3>Microwaves</h3>
+      <p class="freq">λ β‰ˆ 1 mm – 1 m &nbsp;·&nbsp; f β‰ˆ 300 MHz – 300 GHz</p>
+      <ul>
+        <li><b>Travels</b> in a tight, near-straight beam, dish to dish</li>
+        <li><b>Needs</b> both ends pointed directly at each other β€” no bending around obstacles</li>
+        <li><b>Used for</b> satellite links, point-to-point towers, radar</li>
+      </ul>
+    </div>
+    <div class="card" data-card="infrared">
+      <span class="icon">&#x1F534;</span>
+      <h3>Infrared</h3>
+      <p class="freq">λ β‰ˆ 700 nm – 1 mm &nbsp;·&nbsp; f β‰ˆ 300 GHz – 430 THz</p>
+      <ul>
+        <li><b>Travels</b> in an even narrower beam, over short distances</li>
+        <li><b>Blocked</b> by almost anything opaque β€” even a hand in front of the sensor</li>
+        <li><b>Used for</b> TV remotes, short-range data links (IrDA)</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>Simplified for intuition, not a precision RF model — real-world propagation also depends on transmit power, terrain, weather and antenna gain.</footer>
+</div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('stage');
+  const ctx = canvas.getContext('2d');
+  const W = 800, H = 430;
+
+  const tx = {x:118, y:215};
+  const rx = {x:682, y:215};
+  const obstacle = {x:400, w:34, yTop:60, yBot:370};
+  const RADIO_MAX_RANGE = 360;
+
+  const DEFAULT_DEVICES = [
+    {id:'d1', emoji:'\u{1F4FB}', name:'Home radio', x:255, y:145},
+    {id:'d2', emoji:'\u{1F4F1}', name:'Phone', x:430, y:305},
+    {id:'d3', emoji:'\u{1F697}', name:'Car', x:520, y:110},
+    {id:'d4', emoji:'\u{1F681}', name:'Aircraft', x:700, y:360}
+  ];
+
+  const state = {
+    mode:'radio', txAngle:0, rxAngle:180, obstacleOn:false, dragging:null,
+    meter:0, lastTime:performance.now(), devices: DEFAULT_DEVICES.map(d=>({...d}))
+  };
+
+  const HALF_ANGLE = {microwave:18, infrared:9};
+  const SPAWN_MS   = {radio:850, microwave:480, infrared:320};
+  const PULSE_SPEED= {microwave:260, infrared:300};
+  const WAVE_SPEED  = 240;
+
+  let waveFronts = [], pulses = [], lastSpawn = 0, flashes = [];
+
+  function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function colorFor(mode){ return cssVar(mode==='radio' ? '--c-radio' : mode==='microwave' ? '--c-microwave' : '--c-infrared'); }
+  function angleDiff(a,b){ let d=Math.abs(a-b)%360; if(d>180) d=360-d; return d; }
+  function toRad(deg){ return deg*Math.PI/180; }
+  function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+
+  function segCrossesObstacle(p1,p2){
+    if(!state.obstacleOn) return false;
+    const steps=44;
+    for(let i=0;i<=steps;i++){
+      const t=i/steps;
+      const x=p1.x+(p2.x-p1.x)*t, y=p1.y+(p2.y-p1.y)*t;
+      if(x>obstacle.x-obstacle.w/2 && x<obstacle.x+obstacle.w/2 && y>obstacle.yTop && y<obstacle.yBot) return true;
+    }
+    return false;
+  }
+
+  function computeStatus(){
+    const mode = state.mode;
+    const dx = rx.x-tx.x, dy = rx.y-tx.y;
+    const angleToRx = Math.atan2(dy,dx)*180/Math.PI;
+    const angleToTx = Math.atan2(-dy,-dx)*180/Math.PI;
+    const txDiff = angleDiff(state.txAngle, angleToRx);
+    const rxDiff = angleDiff(state.rxAngle, angleToTx);
+    const half = HALF_ANGLE[mode] || 180;
+    const aligned = txDiff<=half && rxDiff<=half;
+    const losBlocked = state.obstacleOn;
+    const connected = aligned && !losBlocked;
+    return {mode, aligned, losBlocked, connected, txDiff, rxDiff, half};
+  }
+
+  function deviceSignal(dev){
+    const d = dist(tx, dev);
+    const blocked = segCrossesObstacle(tx, dev);
+    const rangeFactor = Math.max(0, 1 - d/RADIO_MAX_RANGE);
+    const strength = Math.min(1, rangeFactor * (blocked ? 0.32 : 1));
+    return {d, blocked, strength, inRange: d<=RADIO_MAX_RANGE};
+  }
+
+  function toLogical(clientX, clientY){
+    const r = canvas.getBoundingClientRect();
+    return { x:(clientX-r.left)*(W/r.width), y:(clientY-r.top)*(H/r.height) };
+  }
+
+  canvas.addEventListener('pointerdown', (e)=>{
+    const p = toLogical(e.clientX, e.clientY);
+    if(state.mode==='radio'){
+      let best=null, bestD=40;
+      for(const dv of state.devices){ const dd=dist(p,dv); if(dd<bestD){bestD=dd; best=dv.id;} }
+      if(best) state.dragging = {type:'device', id:best};
+    } else {
+      if(dist(p,tx) < 60) state.dragging = {type:'tx'};
+      else if(dist(p,rx) < 60) state.dragging = {type:'rx'};
+    }
+    if(state.dragging){ canvas.setPointerCapture(e.pointerId); canvas.classList.add('dragging'); }
+  });
+  canvas.addEventListener('pointermove', (e)=>{
+    if(!state.dragging) return;
+    const p = toLogical(e.clientX, e.clientY);
+    if(state.dragging.type==='device'){
+      const dv = state.devices.find(d=>d.id===state.dragging.id);
+      dv.x = Math.max(20, Math.min(W-20, p.x));
+      dv.y = Math.max(20, Math.min(H-46, p.y));
+    } else if(state.dragging.type==='tx'){
+      state.txAngle = Math.atan2(p.y-tx.y, p.x-tx.x)*180/Math.PI;
+      txSlider.value = state.txAngle.toFixed(0);
+    } else if(state.dragging.type==='rx'){
+      state.rxAngle = Math.atan2(p.y-rx.y, p.x-rx.x)*180/Math.PI;
+      rxSlider.value = state.rxAngle.toFixed(0);
+    }
+    updateReadouts();
+  });
+  function endDrag(){ canvas.classList.remove('dragging'); state.dragging=null; }
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+
+  const txSlider = document.getElementById('txSlider');
+  const rxSlider = document.getElementById('rxSlider');
+  const txVal = document.getElementById('txVal');
+  const rxVal = document.getElementById('rxVal');
+  txSlider.addEventListener('input', ()=>{ state.txAngle=+txSlider.value; updateReadouts(); });
+  rxSlider.addEventListener('input', ()=>{ state.rxAngle=+rxSlider.value; updateReadouts(); });
+
+  document.getElementById('alignBtn').addEventListener('click', ()=>{
+    state.txAngle = 0; state.rxAngle = 180; txSlider.value=0; rxSlider.value=180; updateReadouts();
+  });
+  document.getElementById('misalignBtn').addEventListener('click', ()=>{
+    state.txAngle = -60 + Math.random()*40; state.rxAngle = 100 + Math.random()*40;
+    txSlider.value = state.txAngle.toFixed(0); rxSlider.value = state.rxAngle.toFixed(0);
+    updateReadouts();
+  });
+  document.getElementById('resetDevicesBtn').addEventListener('click', ()=>{
+    state.devices = DEFAULT_DEVICES.map(d=>({...d})); buildRoster();
+  });
+  const obstacleBtn = document.getElementById('obstacleBtn');
+  obstacleBtn.addEventListener('click', ()=>{
+    state.obstacleOn = !state.obstacleOn;
+    obstacleBtn.textContent = state.obstacleOn ? 'Remove obstacle' : 'Add obstacle';
+    obstacleBtn.classList.toggle('obstacle-on', state.obstacleOn);
+  });
+
+  const tabs = document.querySelectorAll('.tab');
+  const explainer = document.getElementById('explainer');
+  const hint = document.getElementById('hint');
+  const txSliderGroup = document.getElementById('txSliderGroup');
+  const rxSliderGroup = document.getElementById('rxSliderGroup');
+  const radioNote = document.getElementById('radioNote');
+  const alignBtn = document.getElementById('alignBtn');
+  const misalignBtn = document.getElementById('misalignBtn');
+  const resetDevicesBtn = document.getElementById('resetDevicesBtn');
+  const telemetryDirectional = document.getElementById('telemetryDirectional');
+  const telemetryRadio = document.getElementById('telemetryRadio');
+
+  const EXPLAIN = {
+    radio:"One tower, many receivers β€” that's multicasting. Radio spreads in every direction and fades gradually with distance rather than cutting off. Drag a device toward the edge of the dashed range ring and watch its bars drop; toggle the obstacle and nearby devices still get a weaker signal through diffraction.",
+    microwave:"Microwaves travel as a tight beam. Both dishes must point at each other β€” drag one out of alignment and the beam sails past the receiver entirely. Unlike radio, an obstacle blocks it completely; there's no bending around the wall.",
+    infrared:"Infrared behaves like microwave but with an even narrower beam and shorter range β€” think of a TV remote. The tiniest misalignment, or anything stepping into the path, cuts the link instantly."
+  };
+  const SPEC_POS = {radio:17, microwave:46, infrared:67};
+
+  function setMode(mode){
+    state.mode = mode;
+    document.documentElement.style.setProperty('--accent', 'var(--c-'+mode+')');
+    tabs.forEach(t=>{
+      const active = t.dataset.mode===mode;
+      t.classList.toggle('active', active); t.setAttribute('aria-selected', active);
+    });
+    document.querySelectorAll('.card').forEach(c=>{
+      c.classList.toggle('active', c.dataset.card===mode);
+      c.style.opacity = c.dataset.card===mode ? '1' : '.75';
+    });
+    explainer.innerHTML = EXPLAIN[mode];
+    const isRadio = mode==='radio';
+    txSliderGroup.style.display = isRadio ? 'none' : '';
+    rxSliderGroup.style.display = isRadio ? 'none' : '';
+    radioNote.style.display = isRadio ? '' : 'none';
+    alignBtn.style.display = isRadio ? 'none' : '';
+    misalignBtn.style.display = isRadio ? 'none' : '';
+    resetDevicesBtn.style.display = isRadio ? '' : 'none';
+    telemetryDirectional.style.display = isRadio ? 'none' : '';
+    telemetryRadio.style.display = isRadio ? '' : 'none';
+    hint.textContent = isRadio ? "drag a device to change its distance from the tower" : "drag either antenna to rotate it";
+    const marker = document.getElementById('specMarker');
+    marker.style.left = SPEC_POS[mode] + '%';
+    marker.dataset.tag = mode.toUpperCase();
+    marker.classList.add('show');
+    waveFronts = []; pulses = []; flashes = [];
+    if(isRadio) buildRoster();
+    updateReadouts();
+  }
+  tabs.forEach(t=> t.addEventListener('click', ()=> setMode(t.dataset.mode)));
+
+  let rosterRefs = [];
+  function buildRoster(){
+    telemetryRadio.innerHTML = ''; rosterRefs = [];
+    state.devices.forEach(dv=>{
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.innerHTML =
+        '<div class="dev-head"><span class="dev-emoji">'+dv.emoji+'</span><span class="dev-name">'+dv.name+'</span></div>'+
+        '<div class="bars">'+[0,1,2,3].map(()=>'<div class="bar"></div>').join('')+'</div>'+
+        '<div class="status">—</div>';
+      telemetryRadio.appendChild(cell);
+      rosterRefs.push({ id: dv.id, bars: Array.from(cell.querySelectorAll('.bar')), status: cell.querySelector('.status') });
+    });
+  }
+  function updateRoster(){
+    for(const ref of rosterRefs){
+      const dv = state.devices.find(d=>d.id===ref.id);
+      const s = deviceSignal(dv);
+      const filled = Math.round(s.strength*4);
+      ref.bars.forEach((b,i)=> b.classList.toggle('on', i<filled));
+      if(!s.inRange){ ref.status.textContent='Out of range'; ref.status.className='status bad'; }
+      else if(s.blocked){ ref.status.textContent=Math.round(s.strength*100)+'% Β· diffracted'; ref.status.className='status'; }
+      else { ref.status.textContent=Math.round(s.strength*100)+'% Β· clear'; ref.status.className='status good'; }
+    }
+  }
+
+  const tAlign = document.getElementById('tAlign');
+  const tLos = document.getElementById('tLos');
+  const tSignal = document.getElementById('tSignal');
+  const meterFill = document.getElementById('meterFill');
+
+  function updateReadouts(){
+    txVal.textContent = Math.round(state.txAngle) + 'Β°';
+    rxVal.textContent = Math.round(state.rxAngle) + 'Β°';
+    if(state.mode==='radio'){ updateRoster(); return; }
+    const s = computeStatus();
+    tAlign.textContent = s.aligned ? 'Locked' : 'Off-target';
+    tAlign.className = 'value ' + (s.aligned ? 'good':'bad');
+    tLos.textContent = s.losBlocked ? 'Blocked' : 'Clear';
+    tLos.className = 'value ' + (s.losBlocked ? 'bad':'good');
+    tSignal.textContent = s.connected ? 'Connected' : 'No signal';
+    tSignal.className = 'value ' + (s.connected ? 'good':'bad');
+  }
+
+  function roundRect(x,y,w,h,r){
+    ctx.beginPath(); ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+  }
+
+  function drawGrid(){
+    ctx.save();
+    ctx.fillStyle = colorFor(state.mode);
+    ctx.globalAlpha = 0.08;
+    for(let gx=20; gx<W; gx+=28){
+      for(let gy=20; gy<H-30; gy+=28){ ctx.beginPath(); ctx.arc(gx,gy,1.6,0,Math.PI*2); ctx.fill(); }
+    }
+    ctx.restore();
+  }
+
+  function drawTower(){
+    const c = colorFor('radio');
+    ctx.save();
+    ctx.translate(tx.x, tx.y);
+    ctx.strokeStyle = cssVar('--ink'); ctx.lineWidth = 5;
+    ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.beginPath(); ctx.moveTo(-14,40); ctx.lineTo(0,-46); ctx.lineTo(14,40); ctx.stroke();
+    ctx.strokeStyle = c; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(-14,40); ctx.lineTo(0,-46); ctx.lineTo(14,40); ctx.stroke();
+    for(let i=1;i<=3;i++){
+      const y = 40 - i*24, spread = 14 - i*3.6;
+      ctx.beginPath(); ctx.moveTo(-spread,y); ctx.lineTo(spread,y); ctx.stroke();
+    }
+    const blink = 0.55 + 0.45*Math.sin(performance.now()/260);
+    ctx.beginPath(); ctx.arc(0,-46,5,0,Math.PI*2);
+    ctx.fillStyle = cssVar('--c-infrared'); ctx.globalAlpha = blink; ctx.fill(); ctx.globalAlpha=1;
+    ctx.restore();
+    ctx.save();
+    ctx.font = '700 13px "Baloo 2", sans-serif';
+    ctx.fillStyle = cssVar('--text'); ctx.textAlign='center';
+    ctx.fillText('Tower', tx.x, tx.y+58);
+    ctx.restore();
+  }
+
+  function drawDish(node, angle){
+    const c = colorFor('microwave');
+    ctx.save();
+    ctx.translate(node.x, node.y); ctx.rotate(toRad(angle));
+    ctx.lineWidth = 7; ctx.strokeStyle = cssVar('--ink'); ctx.lineCap='round';
+    ctx.beginPath(); ctx.arc(-6,0,15, 0.55, Math.PI*2-0.55, false); ctx.stroke();
+    ctx.lineWidth = 5; ctx.strokeStyle = c;
+    ctx.beginPath(); ctx.arc(-6,0,15, 0.55, Math.PI*2-0.55, false); ctx.stroke();
+    ctx.lineWidth = 3; ctx.strokeStyle = cssVar('--ink');
+    ctx.beginPath(); ctx.moveTo(-6,0); ctx.lineTo(11,0); ctx.stroke();
+    const feedGrad = ctx.createRadialGradient(11,0,0,11,0,5);
+    feedGrad.addColorStop(0, '#FFFFFF'); feedGrad.addColorStop(1, c);
+    ctx.beginPath(); ctx.arc(11,0,4.5,0,Math.PI*2);
+    ctx.fillStyle = feedGrad; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle=cssVar('--ink'); ctx.stroke();
+    ctx.beginPath(); ctx.arc(38,0,6.5,0,Math.PI*2);
+    ctx.fillStyle = cssVar('--sun'); ctx.fill(); ctx.lineWidth=2.5; ctx.strokeStyle=cssVar('--ink'); ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawEmitter(node, angle, connected){
+    const c = colorFor('infrared');
+    ctx.save();
+    ctx.translate(node.x, node.y); ctx.rotate(toRad(angle));
+    ctx.fillStyle = cssVar('--panel'); ctx.strokeStyle = cssVar('--ink'); ctx.lineWidth = 3;
+    roundRect(-15,-10,24,20,6); ctx.fill(); ctx.stroke();
+    const pulse = connected ? (0.6+0.4*Math.sin(performance.now()/180)) : 1;
+    ctx.shadowColor = c; ctx.shadowBlur = connected ? 16*pulse : 6;
+    const lensGrad = ctx.createRadialGradient(9,0,0,9,0,7);
+    lensGrad.addColorStop(0, '#FFFFFF'); lensGrad.addColorStop(1, c);
+    ctx.beginPath(); ctx.arc(9,0,6.5,0,Math.PI*2);
+    ctx.fillStyle = lensGrad; ctx.fill(); ctx.shadowBlur = 0;
+    ctx.lineWidth=2; ctx.strokeStyle=cssVar('--ink'); ctx.stroke();
+    ctx.beginPath(); ctx.arc(38,0,6.5,0,Math.PI*2);
+    ctx.fillStyle = cssVar('--sun'); ctx.fill(); ctx.lineWidth=2.5; ctx.strokeStyle=cssVar('--ink'); ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawBeamCone(node, angle, mode){
+    const c = colorFor(mode);
+    const half = toRad(HALF_ANGLE[mode]);
+    ctx.save();
+    ctx.translate(node.x, node.y); ctx.rotate(toRad(angle));
+    const grad = ctx.createRadialGradient(0,0,0,0,0,270);
+    grad.addColorStop(0, c+'66'); grad.addColorStop(1, c+'00');
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,270,-half,half); ctx.closePath();
+    ctx.fillStyle = grad; ctx.fill();
+    ctx.restore();
+  }
+
+  function drawDevice(dv){
+    const s = deviceSignal(dv);
+    ctx.save();
+    ctx.globalAlpha = s.inRange ? 1 : 0.35;
+    ctx.font = '27px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(dv.emoji, dv.x, dv.y);
+    ctx.restore();
+    ctx.save();
+    const bx = dv.x-16, by = dv.y-30;
+    const filled = Math.round(s.strength*4);
+    for(let i=0;i<4;i++){
+      const bw=5, bh=4+i*3.4, gx=bx+i*7, gy=by-bh;
+      ctx.fillStyle = i<filled ? colorFor('radio') : cssVar('--line');
+      ctx.fillRect(gx,gy,bw,bh);
+    }
+    ctx.restore();
+  }
+
+  function drawObstacle(){
+    if(!state.obstacleOn) return;
+    ctx.save();
+    const x = obstacle.x - obstacle.w/2;
+    ctx.beginPath();
+    ctx.moveTo(x, obstacle.yTop+16); ctx.lineTo(obstacle.x, obstacle.yTop);
+    ctx.lineTo(x+obstacle.w, obstacle.yTop+16); ctx.lineTo(x+obstacle.w, obstacle.yBot);
+    ctx.lineTo(x, obstacle.yBot); ctx.closePath();
+    ctx.fillStyle = cssVar('--panel-2'); ctx.fill();
+    ctx.lineWidth = 3.5; ctx.strokeStyle = cssVar('--ink'); ctx.stroke();
+    ctx.fillStyle = cssVar('--sun');
+    for(let wy=obstacle.yTop+34; wy<obstacle.yBot-18; wy+=32){
+      ctx.fillRect(obstacle.x-9, wy, 7, 11); ctx.fillRect(obstacle.x+2, wy, 7, 11);
+    }
+    ctx.font = '700 12px "Baloo 2", sans-serif';
+    ctx.fillStyle = cssVar('--text'); ctx.textAlign = 'center';
+    ctx.fillText('Obstacle', obstacle.x, obstacle.yTop - 8);
+    ctx.restore();
+  }
+
+  function drawConnectionLine(now, connected){
+    ctx.save();
+    ctx.lineWidth = connected ? 3 : 2;
+    ctx.strokeStyle = connected ? colorFor(state.mode) : cssVar('--line');
+    ctx.setLineDash(connected ? [10,8] : [4,6]);
+    ctx.lineDashOffset = connected ? -(now/18 % 18) : 0;
+    ctx.globalAlpha = connected ? 0.9 : 0.7;
+    ctx.beginPath(); ctx.moveTo(tx.x, tx.y); ctx.lineTo(rx.x, rx.y); ctx.stroke();
+    ctx.restore();
+  }
+
+  function addFlash(x,y,color){ flashes.push({x,y,t0:performance.now(),color}); }
+  function bumpMeter(a){ state.meter = Math.min(1, state.meter+a); }
+
+  function spawnRadio(now){ waveFronts.push({t0:now, diffracted:false}); }
+  function spawnPulse(now){
+    const a = toRad(state.txAngle);
+    pulses.push({ x:tx.x, y:tx.y, vx:Math.cos(a)*PULSE_SPEED[state.mode], vy:Math.sin(a)*PULSE_SPEED[state.mode], state:'flying', t0:now });
+  }
+  function stepRadio(now){
+    for(const wf of waveFronts){
+      wf.r = (now-wf.t0)/1000 * WAVE_SPEED;
+      if(state.obstacleOn && !wf.diffracted && wf.r >= dist(tx,{x:obstacle.x-obstacle.w/2, y:tx.y})){
+        wf.diffracted = true; wf.dT0 = now;
+      }
+    }
+    waveFronts = waveFronts.filter(wf => wf.r < 620);
+  }
+  function pointInRect(p){
+    if(!state.obstacleOn) return false;
+    return p.x > obstacle.x-obstacle.w/2 && p.x < obstacle.x+obstacle.w/2 && p.y > obstacle.yTop && p.y < obstacle.yBot;
+  }
+  function stepDirectional(dt){
+    for(const p of pulses){
+      if(p.state!=='flying'){ p.fade=(p.fade||0)+dt; continue; }
+      p.x += p.vx*dt; p.y += p.vy*dt;
+      if(pointInRect(p)){ p.state='blocked'; addFlash(p.x,p.y, colorFor(state.mode)); continue; }
+      if(dist(p, rx) < 16){
+        const s = computeStatus();
+        if(s.aligned){ p.state='received'; bumpMeter(0.45); addFlash(rx.x, rx.y, colorFor(state.mode)); }
+        else { p.state='rejected'; addFlash(p.x,p.y, cssVar('--c-infrared')); }
+        continue;
+      }
+      if(p.x<-30||p.x>W+30||p.y<-30||p.y>H+30) p.state='gone';
+    }
+    pulses = pulses.filter(p => p.state==='flying' || (p.fade||0) < 0.5);
+  }
+
+  function draw(now){
+    ctx.clearRect(0,0,W,H);
+    drawGrid();
+    ctx.save();
+    ctx.strokeStyle = cssVar('--line'); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0,H-38); ctx.lineTo(W,H-38); ctx.stroke();
+    ctx.restore();
+
+    const c = colorFor(state.mode);
+
+    if(state.mode==='radio'){
+      ctx.save();
+      ctx.setLineDash([6,8]); ctx.strokeStyle = c; ctx.globalAlpha = 0.5; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(tx.x, tx.y, RADIO_MAX_RANGE, 0, Math.PI*2); ctx.stroke();
+      ctx.restore();
+
+      drawObstacle();
+
+      for(const wf of waveFronts){
+        if(wf.r<=0) continue;
+        const alpha = Math.max(0, 1-wf.r/620) * (state.obstacleOn ? 0.32:0.6);
+        ctx.save();
+        ctx.beginPath(); ctx.arc(tx.x, tx.y, wf.r, 0, Math.PI*2);
+        ctx.strokeStyle = c; ctx.globalAlpha = alpha; ctx.lineWidth = 2.5;
+        ctx.stroke(); ctx.restore();
+        if(wf.diffracted){
+          const rEdge = (now-wf.dT0)/1000*WAVE_SPEED;
+          if(rEdge>0){
+            ctx.save();
+            ctx.beginPath(); ctx.rect(obstacle.x-obstacle.w/2, 0, W-(obstacle.x-obstacle.w/2), H); ctx.clip();
+            [obstacle.yTop, obstacle.yBot].forEach(ey=>{
+              ctx.beginPath(); ctx.arc(obstacle.x, ey, rEdge, 0, Math.PI*2);
+              ctx.strokeStyle = c; ctx.globalAlpha = Math.max(0,1-rEdge/320)*0.55; ctx.lineWidth = 2.5;
+              ctx.stroke();
+            });
+            ctx.restore();
+          }
+        }
+      }
+      drawTower();
+      for(const dv of state.devices) drawDevice(dv);
+    } else {
+      drawConnectionLine(now, computeStatus().connected);
+      drawObstacle();
+      drawBeamCone(tx, state.txAngle, state.mode);
+      drawBeamCone(rx, state.rxAngle, state.mode);
+      for(const p of pulses){
+        ctx.save();
+        let col=c, alpha=1;
+        if(p.state==='blocked'||p.state==='rejected'){ col=cssVar('--c-infrared'); alpha=1-(p.fade||0)*2; }
+        if(p.state==='received'){ alpha=1-(p.fade||0)*2; }
+        ctx.shadowColor = col; ctx.shadowBlur = 12;
+        ctx.beginPath(); ctx.arc(p.x,p.y,5.5,0,Math.PI*2);
+        ctx.fillStyle = col; ctx.globalAlpha = Math.max(0,alpha); ctx.fill();
+        ctx.restore();
+      }
+      const connected = computeStatus().connected;
+      if(state.mode==='microwave'){ drawDish(tx, state.txAngle); drawDish(rx, state.rxAngle); }
+      else { drawEmitter(tx, state.txAngle, connected); drawEmitter(rx, state.rxAngle, connected); }
+      ctx.save();
+      ctx.font = '700 13px "Baloo 2", sans-serif';
+      ctx.fillStyle = cssVar('--text'); ctx.textAlign='center';
+      ctx.fillText('TX', tx.x, tx.y+32); ctx.fillText('RX', rx.x, rx.y+32);
+      ctx.restore();
+    }
+
+    flashes = flashes.filter(f => (now-f.t0) < 500);
+    for(const f of flashes){
+      const t = (now-f.t0)/500;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(f.x,f.y, 8+t*22, 0, Math.PI*2);
+      ctx.strokeStyle = f.color; ctx.globalAlpha = 1-t; ctx.lineWidth = 3;
+      ctx.stroke(); ctx.restore();
+    }
+  }
+
+  function loop(now){
+    const dt = Math.min(0.05, (now - state.lastTime)/1000);
+    state.lastTime = now;
+    if(now - lastSpawn > SPAWN_MS[state.mode]){
+      lastSpawn = now;
+      if(state.mode==='radio') spawnRadio(now); else spawnPulse(now);
+    }
+    if(state.mode==='radio') stepRadio(now); else stepDirectional(dt);
+    state.meter = Math.max(0, state.meter - dt*0.35);
+    meterFill.style.width = Math.round(state.meter*100) + '%';
+    draw(now);
+    updateReadouts();
+    requestAnimationFrame(loop);
+  }
+
+  function fitCanvas(){
+    const dpr = Math.min(2, window.devicePixelRatio||1);
+    canvas.width = W*dpr; canvas.height = H*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  fitCanvas();
+  window.addEventListener('resize', fitCanvas);
+
+  setMode('radio');
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
