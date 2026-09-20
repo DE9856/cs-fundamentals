@@ -14,7 +14,7 @@
 
 ##  About This Repository
 
-This repository is a hands-on collection of **core Computer Science concepts**, implemented across **C, Java, Python, JavaScript, and SQL**.
+This repository is a hands-on collection of **core Computer Science concepts**, implemented across **C, Java, Python, JavaScript, SQL, and Tcl/NS2**.
 
 Unlike theoretical notes, this repo focuses on:
 -  Building concepts **from scratch**
@@ -59,6 +59,10 @@ cs-fundamentals/
 │
 ├── SQL/                     # Numbered SQL query exercises (1.sql–6.sql)
 │
+├── Computer-Networking/     # NS2/Tcl network simulation labs (queue limits, congestion, ping delay)
+│
+├── index.html               # Standalone interactive visualization page — content swapped out per whatever topic is being presented
+│
 └── README.md
 ```
 
@@ -73,6 +77,7 @@ cs-fundamentals/
 - **Artificial Intelligence** — classic search and logic-based problem solving in Python
 - **Web / Backend Development** — Node.js REST APIs, MongoDB CRUD, authentication, cookies
 - **Databases** — SQL query practice
+- **Computer Networking** — NS2/Tcl simulations of queueing, congestion, and ping-delay scenarios
 
 ---
 
