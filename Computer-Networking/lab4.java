@@ -1,4 +1,78 @@
 //NAME THE FILE IN YOUR COMPUTER AS CRC.java
+/*TO EXECUTE
+Run command: javac filename.java
+Run command: java classname
+  */
+
+import java.util.*;
+
+public class CRC {
+  static int[] divide(int[] a, int[] d){
+    int[] r = new int[a.length];
+    for(int i=0;i<a.length;i++)
+      r[i] = a[i];
+    for(int i=0;i+d.length <= r.length; i++){
+      if(r[i]==1)
+        for(int j=0;j<d.length;j++)
+          r[i+j] ^= d[j];
+    }
+    return r;
+  }
+  
+  static int[] read(Scanner sc, int n){
+    int[] a = new int[n];
+    for(int i=0;i<n;i++)
+      a[i] = sc.nextInt();
+    return a;
+  }
+  
+  static void print(int[] a){
+    for(int i=0;i<a.length;i++)
+      System.out.print(a[i]+" ");
+    System.out.println();
+  }
+  
+  public static void main(String[] args){
+    Scanner sc = new Scanner(System.in);
+    
+    System.out.println("Enter number of data bits and the data bits: ");
+    int[] data = read(sc, sc.nextInt());
+    
+    System.out.println("Enter number of divisor bits and the divisor bits: ");
+    int[] div = read(sc, sc.nextInt());
+    
+    int n= data.length + div.length -1;
+    int[] code = new int[n];
+    
+    for(int i=0;i<data.length;i++)
+      code[i] = data[i];
+    System.out.println("Dividend after appending 0's: ");
+    print(code);
+    
+    int[] rem = divide(code, div);
+    for(int i=data.length;i<n;i++)
+      code[i] = rem[i];
+    System.out.println("CRC Code: ");
+    print(code);
+    
+    System.out.println("Enter recieved code of "+n+" bits");
+    rem = divide(read(sc,n),div);
+    boolean error = false;
+    for(int i=0;i<n;i++)
+      if(rem[i]!=0)
+        error = true;
+      System.out.println(error?"Error":"No Error");
+      System.out.println("Thank you");
+  }
+}
+
+
+
+
+//OR
+
+
+
 import java.io.*;
 import java.math.*;
 class CRC{
